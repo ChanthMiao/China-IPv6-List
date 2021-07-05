@@ -55,7 +55,7 @@ jobs:
 
       - name: Fetch bgp data.
         run: |
-          LATEST6=$(curl -sL ${{ env.IP6UPSTREAM }}/${{ env.MONTH6 }}/RIBS|html2text|grep bz2|awk '{print $3}'|awk '{gsub("(rib.|.bz2)",""); print $1}'|tail -n 1)
+          LATEST6=$(curl -sL ${{ env.IP6UPSTREAM }}/${{ env.MONTH6 }}/RIBS|html2text|grep bz2|awk '{print $3}'|tail -n 1)
           TAG_NAME=$(echo ${LATEST6}|awk '{gsub("(rib.|.bz2)",""); print $1}')
           wget -O rib6.bz2 "$IP6UPSTREAM/$MONTH6/RIBS/$LATEST6"
           echo "TAG_NAME=${TAG_NAME}" >> $GITHUB_ENV
