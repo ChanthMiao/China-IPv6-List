@@ -1,0 +1,130 @@
+# This is a basic workflow to help you get started with Actions
+
+name: Build China IPv6 list.
+
+# Controls when the workflow will run
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 22 * * *"
+  push:
+    branches:
+      - main
+    paths-ignore:
+      - "**/README.md"
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+  # This workflow contains a single job called "build"
+  build:
+    # The type of runner that the job will run on
+    runs-on: ubuntu-latest
+
+    # Steps represent a sequence of tasks that will be executed as part of the job
+    steps:
+      - name: Setup Go environment
+        uses: actions/setup-go@v2
+
+      - name: Setup Rust environmet
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+
+      - name: Install packages.
+        run: |
+          sudo apt-get update && sudo apt-get install -y bgpdump html2text
+          cargo install bgptools
+          go get github.com/zhanhb/cidr-merger
+        shell: bash
+
+      - name: Set variables
+        run: |
+          echo "PATH=$(go env GOPATH)/bin:${PATH}" >> $GITHUB_ENV
+          echo "IP6UPSTREAM=http://archive.routeviews.org/route-views6/bgpdata" >> $GITHUB_ENV
+          echo "MONTH6=$(date -u +%Y.%m)" >> $GITHUB_ENV
+        shell: bash
+
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - uses: actions/checkout@v2
+        with:
+          ref: main
+
+      - name: Generate AS table
+        run: curl -sSL https://bgp.potaroo.net/cidr/autnums.html | awk '-F[<>]' '{print $3,$5}' | grep '^AS' > asnames.txt
+        shell: bash
+
+      - name: Fetch bgp data.
+        run: |
+          LATEST6=$(curl -sL ${{ env.IP6UPSTREAM }}/${{ env.MONTH6 }}/RIBS|html2text|grep bz2|awk '{print $3}'|awk '{gsub("(rib.|.bz2)",""); print $1}'|tail -n 1)
+          TAG_NAME=$(echo ${LATEST6}|awk '{gsub("(rib.|.bz2)",""); print $1}')
+          wget -O rib6.bz2 "$IP6UPSTREAM/$MONTH6/RIBS/$LATEST6"
+          echo "TAG_NAME=${TAG_NAME}" >> $GITHUB_ENV
+          echo "RELEASE_NAME=${TAG_NAME}" >> $GITHUB_ENV
+
+      - name: Dump bgp date.
+        run: |
+          echo "running bgpdump ..."
+          bgpdump -m -O rib6.txt rib6.bz2
+          echo "finish bgpdump"
+        shell: bash
+
+      - name: Generate China IPv6 list
+        run: |
+          cat asnames.txt|grep -P "CN\$"|grep -vPi "AS45102"|awk '{gsub(/AS/, ""); print $1}' > cnasn.list
+          cat cnasn.list|xargs bgptools -b rib6.txt|cidr-merger -s|grep -F ':' > cn6.txt
+        shell: bash
+
+      - name: Generate China6.txt sha256 hash
+        run: |
+          sha256sum cn6.txt > cn6.txt.sha256sum
+        shell: bash
+
+      - name: Move files to publish directory
+        run: |
+          mkdir -p publish
+          mv cn6.txt cn6.txt.sha256sum ./publish
+        shell: bash
+
+      - name: Git push assets to "release" branch
+        run: |
+          cd publish || exit 1
+          git init
+          git config --local user.name "github-actions[bot]"
+          git config --local user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -b release
+          git add cn6.txt cn6.txt.sha256sum
+          git commit -m "${{ env.RELEASE_NAME }}"
+          git remote add China-IPv6-List "https://${{ github.actor }}:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}"
+          git push -f -u China-IPv6-List release
+        shell: bash
+
+      - name: Create a release
+        id: create_release
+        uses: actions/create-release@v1.1.4
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ env.TAG_NAME }}
+          release_name: ${{ env.RELEASE_NAME }}
+          draft: false
+          prerelease: false
+
+      - name: Upload geoip.dat
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./publish/cn6.txt
+          asset_name: cn6.txt
+          asset_content_type: text/plain
+
+      - name: Upload geoip.dat sha256sum
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./publish/cn6.txt.sha256sum
+          asset_name: cn6.txt.sha256sum
+          asset_content_type: text/plain
