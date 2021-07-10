@@ -74,7 +74,7 @@ jobs:
           cat cnasn.list|xargs bgptools -b rib6.txt|cidr-merger -s|grep -F ':' > cn6.txt
         shell: bash
 
-      - name: Generate China6.txt sha256 hash
+      - name: Generate cn6.txt sha256 hash
         run: |
           sha256sum cn6.txt > cn6.txt.sha256sum
         shell: bash
