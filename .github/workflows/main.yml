@@ -96,6 +96,5 @@ jobs:
           git config user.name 'github-actions[bot]'
           git config user.email 'github-actions[bot]@users.noreply.github.com'
           git add .
-          git commit -m "${{ env.RELEASE_NAME }}"
-          git push
+          [[ -n $(git status -s) ]] && git commit -m "${{ env.RELEASE_NAME }}" && git push
         shell: bash
