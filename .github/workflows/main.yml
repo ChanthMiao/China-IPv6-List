@@ -73,7 +73,7 @@ jobs:
       - name: Generate China IPv6 list
         run: |
           cat asnames.txt|grep -P "CN\$"|grep -vPi "AS45102"|awk '{gsub(/AS/, ""); print $1}' > cnasn.list
-          cat cnasn.list|xargs bgptools -b rib6.txt|cidr-merger -s|grep -F ':' > cn6.txt
+          cat cnasn.list|xargs bgptools -b rib6.txt|grep -v '^::/0$'|cidr-merger -s|grep -F ':' > cn6.txt
         shell: bash
 
       - name: Generate cn6.txt sha256 hash
