@@ -29,9 +29,7 @@ jobs:
         uses: actions/setup-go@v3
 
       - name: Setup Rust environmet
-        uses: actions-rs/toolchain@v1
-        with:
-          toolchain: stable
+        uses: dtolnay/rust-toolchain@stable
 
       - name: Install packages.
         run: |
