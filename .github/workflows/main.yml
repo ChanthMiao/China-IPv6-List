@@ -37,7 +37,7 @@ jobs:
         run: |
           sudo apt-get update && sudo apt-get install -y bgpdump html2text
           cargo install --vers 0.0.3 bgptools
-          go get github.com/zhanhb/cidr-merger@v1.1.3
+          go install github.com/zhanhb/cidr-merger@v1.1.3
         shell: bash
 
       - name: Set variables
