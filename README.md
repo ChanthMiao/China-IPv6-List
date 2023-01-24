@@ -11,14 +11,12 @@
 
 ## 下载地址
 
-> 如果无法稳定访问域名`raw.githubusercontent.com`，可以使用jsdelivr提供的CDN地址(`cdn.jsdelivr.net`)，但内容更新会有12小时的延迟。
+> 2023.01.24 更新: 因 [jsdelivr 大陆服务节点关闭](https://luotianyi.vc/6295.html)，移除相应 CDN 链接。
 
 - cn6.txt:
   - <https://raw.githubusercontent.com/ChanthMiao/China-IPv6-List/release/cn6.txt>
-  - <https://cdn.jsdelivr.net/gh/ChanthMiao/China-IPv6-List@release/cn6.txt>
 - cn6.txt.sha256sum:
   - <https://raw.githubusercontent.com/ChanthMiao/China-IPv6-List/release/cn6.txt.sha256sum>
-  - <https://cdn.jsdelivr.net/gh/ChanthMiao/China-IPv6-List@release/cn6.txt.sha256sum>
 
 ## 致谢
 
