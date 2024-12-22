@@ -45,7 +45,7 @@ jobs:
           echo "MONTH6=$(date -u +%Y.%m)" >> $GITHUB_ENV
         shell: bash
 
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           ref: main
           path: code
@@ -80,7 +80,7 @@ jobs:
         shell: bash
 
       - name: Checkout release branch
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           ref: release
           path: release
